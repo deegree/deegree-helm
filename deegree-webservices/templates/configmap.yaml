@@ -1,0 +1,49 @@
+{{- if has .Values.context (list "secret" "environment") -}}
+{{- $fullName := include "deegree-webservices.fullname" . -}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "deegree-webservices.fullname" . }}
+  labels:
+    {{- include "deegree-webservices.labels" . | nindent 4 }}
+data:
+  context.xml: |-
+    <?xml version="1.0" encoding="UTF-8"?>
+    <Context>
+        <!-- Default set of monitored resources. If one of these changes, the    -->
+        <!-- web application will be reloaded.                                   -->
+        <!--
+        <WatchedResource>WEB-INF/web.xml</WatchedResource>
+        <WatchedResource>WEB-INF/tomcat-web.xml</WatchedResource>
+        <WatchedResource>${catalina.base}/conf/web.xml</WatchedResource>
+        -->
+        <!-- Uncomment this to enable session persistence across Tomcat restarts -->
+        <!--
+        <Manager pathname="SESSIONS.ser" />
+        -->
+{{- if eq .Values.context "secret" }}
+        <Resource name="jdbc/deegree"
+            auth="Container"
+            type="javax.sql.DataSource"
+            driverClassName="oracle.jdbc.OracleDriver"
+            url="${chomp:database.URL}"
+            username="${chomp:database.USERNAME}"
+            password="${chomp:database.PASSWORD}"
+            maxTotal="10"
+            maxIdle="1"
+            maxWaitMillis="-1"/>
+{{- else }}
+        <Resource name="jdbc/deegree"
+            auth="Container"
+            type="javax.sql.DataSource"
+            driverClassName="oracle.jdbc.OracleDriver"
+            url="${chomp:DB_URL}"
+            username="${chomp:DB_USERNAME}"
+            password="${chomp:DB_PASSWORD}"
+            maxTotal="10"
+            maxIdle="1"
+            maxWaitMillis="-1"/>
+{{- end }}
+
+    </Context>
+{{- end }}
